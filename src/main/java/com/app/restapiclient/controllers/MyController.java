@@ -33,6 +33,7 @@ public class MyController {
     @GetMapping
     public TweetDTO[] getAllTweets() throws JsonProcessingException {
 
+        // Needs to be fixed later
         ResponseEntity<String> response = restTemplate.getForEntity(RESOURCE_URL, String.class);
 
         String json = response.getBody();
@@ -51,6 +52,7 @@ public class MyController {
     @GetMapping("/{id}")
     public TweetDetailsDTO getTweetById(@PathVariable long id) throws JsonProcessingException {
 
+        // fix later
         String json = restTemplate.getForEntity(RESOURCE_URL, String.class).getBody();
 
         mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
@@ -77,8 +79,24 @@ public class MyController {
     TODO: Get detailed profile info (name, location, description) given user screen name
      */
 
-//    @GetMapping("/{userName}")
-//    public ResponseEntity<> getProfileInfoByUserName(@PathVariable String userName) {
-//    }
+    @GetMapping("/user/{username}")
+    public UserDTO getProfileInfoByUserName(@PathVariable String username) throws JsonProcessingException {
+        String json = restTemplate.getForEntity(RESOURCE_URL, String.class).getBody();
+
+        mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+        TweetDetails[] tweetDetailsArr = mapper.readValue(json, TweetDetails[].class);
+
+        for(TweetDetails details : tweetDetailsArr) {
+            UserDTO userDTO = mapper.convertValue(details.getUser(), UserDTO.class);
+
+            if(userDTO.getScreen_name().equals(username)){
+                return userDTO;
+            }
+        }
+
+        throw new RuntimeException("404 NOT FOUND!");
+    }
 
 }
