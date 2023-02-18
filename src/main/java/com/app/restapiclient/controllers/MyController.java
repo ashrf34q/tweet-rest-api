@@ -1,7 +1,9 @@
 package com.app.restapiclient.controllers;
 
+import com.app.restapiclient.domain.TweetDetails;
 import com.app.restapiclient.model.TweetDTO;
 import com.app.restapiclient.model.TweetDetailsDTO;
+import com.app.restapiclient.model.UserDTO;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
 
 @RestController
 @RequestMapping(MyController.BASE_URL)
@@ -47,10 +48,6 @@ public class MyController {
     TODO: Get a list of all tweets appearing in the text field. Links should be grouped based on tweet ids.
      */
 
-    /*
-    TODO: Based on tweet id given in the request, return details of the tweet (created_at, text, screen_name, lang)
-     */
-
     @GetMapping("/{id}")
     public TweetDetailsDTO getTweetById(@PathVariable long id) throws JsonProcessingException {
 
@@ -59,11 +56,18 @@ public class MyController {
         mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-        TweetDetailsDTO[] detailsDTOS = mapper.readValue(json, TweetDetailsDTO[].class);
+        // Mapping JSON to DTO POJO
+        TweetDetails[] tweetDetailsArr = mapper.readValue(json, TweetDetails[].class);
 
-        for(TweetDetailsDTO detailsDTO : detailsDTOS) {
-            if(detailsDTO.getId() == id) {
-                return detailsDTO;
+        for(TweetDetails details : tweetDetailsArr) {
+            if(details.getId() == id) {
+
+                // Mapping User object from our DetailsDTO to our userDTO
+                UserDTO userDTO = mapper.convertValue(details.getUser(), UserDTO.class);
+
+                details.setScreen_name(userDTO.getScreen_name());
+
+                return mapper.convertValue(details, TweetDetailsDTO.class);
             }
         }
        throw new RuntimeException("404 NOT FOUND!");
