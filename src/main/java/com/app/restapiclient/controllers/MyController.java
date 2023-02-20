@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 @RestController
 @RequestMapping(MyController.BASE_URL)
@@ -46,8 +51,51 @@ public class MyController {
 
 
     /*
-    TODO: Get a list of all tweets appearing in the text field. Links should be grouped based on tweet ids.
+    TODO: Get a list of all links appearing in the text field. Extract Links and group based on tweet ids.
      */
+
+    @GetMapping("/threadlinks")
+    public String getLinks() throws JsonProcessingException {
+
+        // map to tweet details, so we can use the text field
+
+        String json = restTemplate.getForEntity(RESOURCE_URL, String.class).getBody();
+
+        mapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+        // Mapping JSON to DTO POJO
+        TweetDetails[] tweetDetailsArr = mapper.readValue(json, TweetDetails[].class);
+
+
+        // Pattern for recognizing a URL, based off RFC 3986
+          final Pattern urlPattern = Pattern.compile(
+                "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)"
+                        + "(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*"
+                        + "[\\p{Alnum}.,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)",
+                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+
+          Map<Long, String> urlMap = new HashMap<>();
+
+        for(TweetDetails details : tweetDetailsArr){
+//            String s = details.getText();
+
+            Matcher matcher = urlPattern.matcher(details.getText());
+
+            while(matcher.find()){
+                int matchStart = matcher.start(1);
+                int matchEnd = matcher.end();
+
+                String s = details.getText().substring(matchStart, matchEnd);
+
+                urlMap.put(details.getId(), s);
+            }
+        }
+
+        return mapper.writeValueAsString(urlMap);
+    }
+
+
 
     @GetMapping("/{id}")
     public TweetDetailsDTO getTweetById(@PathVariable long id) throws JsonProcessingException {
@@ -75,9 +123,6 @@ public class MyController {
        throw new RuntimeException("404 NOT FOUND!");
     }
 
-    /*
-    TODO: Get detailed profile info (name, location, description) given user screen name
-     */
 
     @GetMapping("/user/{username}")
     public UserDTO getProfileInfoByUserName(@PathVariable String username) throws JsonProcessingException {
