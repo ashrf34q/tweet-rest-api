@@ -49,11 +49,6 @@ public class MyController {
         return mapper.readValue(json, TweetDTO[].class);
     }
 
-
-    /*
-    TODO: Get a list of all links appearing in the text field. Extract Links and group based on tweet ids.
-     */
-
     @GetMapping("/threadlinks")
     public String getLinks() throws JsonProcessingException {
 
@@ -78,7 +73,6 @@ public class MyController {
           Map<Long, String> urlMap = new HashMap<>();
 
         for(TweetDetails details : tweetDetailsArr){
-//            String s = details.getText();
 
             Matcher matcher = urlPattern.matcher(details.getText());
 

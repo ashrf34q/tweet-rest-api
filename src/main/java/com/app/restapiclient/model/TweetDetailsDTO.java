@@ -1,6 +1,5 @@
 package com.app.restapiclient.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 @Data
