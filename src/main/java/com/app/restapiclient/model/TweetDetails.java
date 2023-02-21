@@ -1,4 +1,4 @@
-package com.app.restapiclient.domain;
+package com.app.restapiclient.model;
 
 import lombok.Data;
 
